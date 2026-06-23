@@ -13,14 +13,19 @@ export interface Message {
 
 let aiInstance: GoogleGenAI | null = null;
 function getGeminiClient(): GoogleGenAI {
-  if (!aiInstance) {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey || apiKey === 'your_key_here') {
-      throw new Error("VITE_GEMINI_API_KEY is missing. Please add it to .env.local");
-    }
+  const localKey = typeof window !== 'undefined' ? localStorage.getItem('VITE_GEMINI_API_KEY') : null;
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = localKey || envKey;
+
+  if (!apiKey || apiKey === 'your_key_here') {
+    throw new Error("VITE_GEMINI_API_KEY is missing. Please add it to Vercel environment variables or enter it in the sidebar settings.");
+  }
+  
+  if (!aiInstance || (aiInstance as any)._apiKey !== apiKey) {
     aiInstance = new GoogleGenAI({
       apiKey: apiKey,
     });
+    (aiInstance as any)._apiKey = apiKey;
   }
   return aiInstance;
 }

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Loader2, Code, FileText, Bot, ListTodo, Presentation, Route, Plus } from 'lucide-react';
+import { Send, Loader2, Code, FileText, Bot, ListTodo, Presentation, Route, Plus, Key } from 'lucide-react';
 import { processQuery, type Message } from './api/agent';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -28,6 +28,27 @@ function App() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const [userApiKey, setUserApiKey] = useState(() => {
+    return localStorage.getItem('VITE_GEMINI_API_KEY') || '';
+  });
+
+  const [isKeyConfigured, setIsKeyConfigured] = useState(() => {
+    const key = localStorage.getItem('VITE_GEMINI_API_KEY') || import.meta.env.VITE_GEMINI_API_KEY;
+    return !!key && key !== 'your_key_here';
+  });
+
+  const handleApiKeyChange = (val: string) => {
+    setUserApiKey(val);
+    if (val.trim()) {
+      localStorage.setItem('VITE_GEMINI_API_KEY', val.trim());
+      setIsKeyConfigured(true);
+    } else {
+      localStorage.removeItem('VITE_GEMINI_API_KEY');
+      const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+      setIsKeyConfigured(!!envKey && envKey !== 'your_key_here');
+    }
+  };
 
   const scrollToBottom = useCallback(() => {
     if (messages.length > 0) {
@@ -105,6 +126,60 @@ function App() {
         >
           <Plus size={16} /> New Chat
         </button>
+
+        {/* API Key Configuration */}
+        <div style={{
+          marginTop: '10px',
+          marginBottom: '20px',
+          padding: '14px',
+          borderRadius: 'var(--radius-md)',
+          background: 'rgba(255, 255, 255, 0.03)',
+          border: '1px solid var(--border-light)',
+          fontSize: '0.85rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <Key size={14} className="brand-icon" />
+            <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Gemini API Key</span>
+            <span style={{
+              marginLeft: 'auto',
+              fontSize: '0.7rem',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              background: isKeyConfigured ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              color: isKeyConfigured ? '#10b981' : '#ef4444',
+              fontWeight: '500'
+            }}>
+              {isKeyConfigured ? 'Active' : 'Missing'}
+            </span>
+          </div>
+          <input
+            type="password"
+            placeholder="Enter Gemini API Key..."
+            value={userApiKey}
+            onChange={(e) => handleApiKeyChange(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px 10px',
+              background: 'var(--bg-darker)',
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-sm)',
+              color: '#fff',
+              fontSize: '0.8rem',
+              outline: 'none',
+              transition: 'border-color 0.2s'
+            }}
+            onFocus={(e) => e.target.style.borderColor = 'var(--brand-yellow)'}
+            onBlur={(e) => e.target.style.borderColor = 'var(--border-light)'}
+          />
+          <p style={{
+            fontSize: '0.7rem',
+            color: 'var(--text-secondary)',
+            marginTop: '6px',
+            lineHeight: '1.3'
+          }}>
+            Saved locally in browser. Or set VITE_GEMINI_API_KEY in Vercel.
+          </p>
+        </div>
         
         <div className="nav-section">
           <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px', marginTop: '20px' }}>Capabilities</h4>
